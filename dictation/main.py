@@ -1,19 +1,27 @@
 import locale
+import logging.config
 import sys
 
 from PySide6.QtCore import QTranslator, QLibraryInfo
 from PySide6.QtWidgets import QMainWindow, QApplication
+
+from settings import LOGGING_CONFIG
+
+
+logger = logging.getLogger('dictation.app')
 
 
 class DictationApp(QMainWindow):
 
     def __init__(self):
         super().__init__()
+        logger.debug('Initializing Dictionation App')
         self.setWindowTitle(self.tr('Dictionation'))
         self.show()
 
 
 if __name__ == '__main__':
+    logging.config.dictConfig(LOGGING_CONFIG)
     app = QApplication(sys.argv)
     qtbase_translator = QTranslator()
     qtbase_translator.load(
