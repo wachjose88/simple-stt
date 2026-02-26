@@ -9,6 +9,8 @@ from PySide6.QtCore import QTranslator, QLibraryInfo
 from PySide6.QtWidgets import QMainWindow, QApplication, QMessageBox
 
 from dictation.editor import Editor
+from dictation.signals import DictationSignals
+from dictation.stt import SpeechToText
 from settings import LOGGING_CONFIG
 
 
@@ -27,9 +29,22 @@ class DictationApp(QMainWindow):
         self.models = {str(x.name): x for x in self.models_directory.iterdir() if x.is_dir()}
         logger.debug(self.models)
 
-        self.editor = Editor(self, self.models)
+        self.signals = DictationSignals()
+
+        self.stt_thread = SpeechToText(self.signals)
+
+        self.editor = Editor(self, self.models, self.stt_thread)
+        self.signals.set_text_to_view.connect(self.editor.set_text_to_view)
         self.setCentralWidget(self.editor)
         self.show()
+
+    def set_status(self, text):
+        self.statusBar().showMessage(text)
+
+    def stop_stt(self):
+        if self.stt_thread.isRunning():
+            self.stt_thread.stop = True
+            self.stt_thread.wait()
 
     def closeEvent(self, event):
         result = QMessageBox.question(

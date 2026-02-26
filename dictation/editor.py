@@ -1,8 +1,10 @@
 import logging
-import re
 
+import language_tool_python
+import requests
 from PySide6.QtGui import QGuiApplication
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTextEdit, QGridLayout, QComboBox
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTextEdit, QGridLayout, QComboBox, QLabel, \
+    QSizePolicy
 
 logger = logging.getLogger('dictation.app')
 
@@ -41,6 +43,7 @@ class ActionPanel(QWidget):
             col = int(i % 2)
             self.action_grid.addWidget(action_button, row, col)
             i = i + 1
+        self.action_grid.setRowStretch(i, 5)
         self.setLayout(self.action_grid)
 
     def add_to_text(self):
@@ -58,26 +61,43 @@ class ActionPanel(QWidget):
 
 class Editor(QWidget):
 
-    def __init__(self, parent, models):
+    def __init__(self, parent, models, stt_thread):
         super().__init__(parent)
         self.models = models
+        self.stt_thread = stt_thread
+        self.tool = language_tool_python.LanguageTool('de-AT')
+        self.languages = requests.get(self.tool._url + 'languages').json()
+        self.active_language = 'de-AT'
         self.start_text = self.tr('Start')
         self.stop_text = self.tr('Stop')
         self.vbox = QVBoxLayout()
 
-        self.hbox = QHBoxLayout()
+        self.select_box = QGridLayout()
+
         self.select_model = QComboBox()
+        self.language_label = QLabel(self.tr('Language'))
+        self.model_label = QLabel(self.tr('Model'))
+        self.select_box.addWidget(self.language_label, 0, 0)
+        self.select_box.addWidget(self.model_label, 1, 0)
         for model in self.models:
             self.select_model.addItem(model)
         self.select_model.currentTextChanged.connect(self.select_model_changed)
-        self.hbox.addWidget(self.select_model)
+        self.select_language = QComboBox()
+        for language in self.languages:
+            self.select_language.addItem(language['name'])
+        self.select_language.setCurrentText(self.code_to_language(self.active_language))
+        self.select_language.currentTextChanged.connect(self.select_language_changed)
+        self.select_box.addWidget(self.select_language, 0, 1)
+        self.select_box.addWidget(self.select_model, 1, 1)
         self.start_stop_button = QPushButton(self.start_text)
+        self.start_stop_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.start_stop_button.clicked.connect(self.start_stop_button_clicked)
-        self.hbox.addWidget(self.start_stop_button)
+        self.select_box.addWidget(self.start_stop_button, 0, 2, 2, 1)
         self.copy_button = QPushButton(self.tr('Copy'))
+        self.copy_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.copy_button.clicked.connect(self.copy_button_clicked)
-        self.hbox.addWidget(self.copy_button)
-        self.vbox.addLayout(self.hbox)
+        self.select_box.addWidget(self.copy_button, 0, 3, 2, 1)
+        self.vbox.addLayout(self.select_box)
 
         self.text_hbox = QHBoxLayout()
         self.text_edit = QTextEdit()
@@ -87,21 +107,64 @@ class Editor(QWidget):
         self.vbox.addLayout(self.text_hbox)
         self.setLayout(self.vbox)
 
+    def set_text_to_view(self, text):
+        logger.debug(self.text_edit.textCursor().position())
+        add_space = True
+        position = self.text_edit.textCursor().position()
+        if position < 1:
+            add_space = False
+        else:
+            last_char = self.text_edit.toPlainText()[position - 1]
+            if last_char != ' ':
+                add_space = True
+        self.text_edit.insertPlainText(f' {text}' if add_space else text)
+
     def select_model_changed(self, text):
         logger.debug(f'Selected model {text}')
+
+    def select_language_changed(self, text):
+        logger.debug(f'Selected language {text}')
+        lang = None
+        for language in self.languages:
+            if language['name'] == text:
+                lang = language
+                break
+        if lang:
+            self.active_language = lang['longCode']
+            self.tool.close()
+            self.tool = language_tool_python.LanguageTool(lang['longCode'])
 
     def start_stop_button_clicked(self):
         logger.debug('Start stop button')
         label = self.start_stop_button.text()
         if label == self.start_text:
+            self.stt_thread.model_name = self.models[self.select_model.currentText()]
+            self.stt_thread.stop = False
+            self.stt_thread.start()
             self.start_stop_button.setText(self.stop_text)
             self.select_model.setDisabled(True)
+            self.parent().set_status(self.tr('Recording started. Please dictate in ')
+                                     + self.code_to_language(self.active_language))
         else:
+            if self.stt_thread.isRunning():
+                self.stt_thread.stop = True
+                self.stt_thread.wait()
             self.start_stop_button.setText(self.start_text)
             self.select_model.setDisabled(False)
+            self.parent().set_status(self.tr('Correcting text. Please wait.'))
+            self.text_edit.setPlainText(
+                self.tool.correct(self.text_edit.toPlainText())
+            )
+            self.parent().set_status(self.tr('Recording stopped.'))
 
     def copy_button_clicked(self):
         logger.debug('Copy button')
         clipboard = QGuiApplication.clipboard()
         text = self.text_edit.toPlainText()
         clipboard.setText(text)
+        self.parent().set_status(self.tr('Text copied to clipboard.'))
+
+    def code_to_language(self, code):
+        for language in self.languages:
+            if language['longCode'] == code:
+                return language['name']
