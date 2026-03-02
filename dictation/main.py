@@ -93,7 +93,8 @@ if __name__ == '__main__':
         QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath))
     app.installTranslator(qt_translator)
     translator = QTranslator()
-    translator.load('locales/dictation_' + locale.getlocale()[0][0:2])
+    translator.load('dictation_' + locale.getlocale()[0][0:2],
+                    str(Path(__file__).parent / 'locales'))
     app.installTranslator(translator)
 
     dapp = DictationApp(args.models_directory)

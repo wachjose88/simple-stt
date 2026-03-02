@@ -2,6 +2,7 @@ import logging
 
 import language_tool_python
 import requests
+from PySide6.QtCore import QSize
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTextEdit, QGridLayout, QComboBox, QLabel, \
     QSizePolicy
@@ -97,15 +98,23 @@ class Editor(QWidget):
         self.copy_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.copy_button.clicked.connect(self.copy_button_clicked)
         self.select_box.addWidget(self.copy_button, 0, 3, 2, 1)
+        self.clear_button = QPushButton(self.tr('Clear'))
+        self.clear_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.clear_button.clicked.connect(self.clear_button_clicked)
+        self.select_box.addWidget(self.clear_button, 0, 4, 2, 1)
         self.vbox.addLayout(self.select_box)
 
         self.text_hbox = QHBoxLayout()
         self.text_edit = QTextEdit()
+        self.text_edit.setMinimumSize(QSize(400, 400))
         self.text_hbox.addWidget(self.text_edit)
         self.action_panel = ActionPanel(self, self.text_edit)
         self.text_hbox.addWidget(self.action_panel)
         self.vbox.addLayout(self.text_hbox)
         self.setLayout(self.vbox)
+
+    def clear_button_clicked(self):
+        self.text_edit.clear()
 
     def set_text_to_view(self, text):
         logger.debug(self.text_edit.textCursor().position())
