@@ -2,3 +2,4 @@ pyside6
 vosk
 sounddevice
 language_tool_python
+sphinx
