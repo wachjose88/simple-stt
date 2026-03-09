@@ -1,5 +1,5 @@
-manage.py
-=========
+main.py
+=======
 
 .. automodule:: main
     :members:

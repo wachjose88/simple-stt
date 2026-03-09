@@ -6,6 +6,9 @@
 Simple Dictation App Documentation
 ==================================
 
+Overview
+--------
+
 This is a very simple dictation app. It uses vosk for speech recognition
 and pyside6 for the UI.
 
@@ -18,4 +21,5 @@ Source Code Documentation
    :maxdepth: 3
 
    main
+   editor
 
