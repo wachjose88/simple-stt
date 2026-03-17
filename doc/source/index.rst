@@ -22,4 +22,6 @@ Source Code Documentation
 
    main
    editor
+   stt
+   signals
 
