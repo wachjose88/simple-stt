@@ -36,6 +36,8 @@ from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTextEdit, QGridLayout, QComboBox, QLabel, \
     QSizePolicy
 
+from dictation.stt import CorrectText
+
 logger = logging.getLogger('dictation.app')
 """Logger instance for the app."""
 
@@ -129,6 +131,7 @@ class Editor(QWidget):
         tool (LanguageTool): Language Tool object.
         languages (list): languages provided by Language Tool.
         active_language (str): Active language.
+        correction (CorrectText): Thread to correct the text.
 
     Arguments:
         parent (QWidget): Parent widget.
@@ -143,6 +146,7 @@ class Editor(QWidget):
         self.tool = language_tool_python.LanguageTool('de-AT')
         self.languages = requests.get(self.tool._url + 'languages').json()
         self.active_language = 'de-AT'
+        self.correction = CorrectText(self.parent().signals, self.tool)
         self.start_text = self.tr('Start')
         self.stop_text = self.tr('Stop')
         self.vbox = QVBoxLayout()
@@ -239,24 +243,35 @@ class Editor(QWidget):
         logger.debug('Start stop button')
         label = self.start_stop_button.text()
         if label == self.start_text:
+            self.parent().set_status(self.tr('Loading model. Please wait.'))
             self.stt_thread.model_name = self.models[self.select_model.currentText()]
             self.stt_thread.stop = False
             self.stt_thread.start()
-            self.start_stop_button.setText(self.stop_text)
-            self.select_model.setDisabled(True)
-            self.parent().set_status(self.tr('Recording started. Please dictate in ')
-                                     + self.code_to_language(self.active_language))
+
         else:
+            self.parent().set_status(self.tr('Correcting text. Please wait.'))
             if self.stt_thread.isRunning():
                 self.stt_thread.stop = True
                 self.stt_thread.wait()
-            self.start_stop_button.setText(self.start_text)
-            self.select_model.setDisabled(False)
-            self.parent().set_status(self.tr('Correcting text. Please wait.'))
-            self.text_edit.setPlainText(
-                self.tool.correct(self.text_edit.toPlainText())
-            )
-            self.parent().set_status(self.tr('Recording stopped.'))
+            self.text_edit.setDisabled(True)
+            self.correction.text = self.text_edit.toPlainText()
+            self.correction.start()
+
+    def correction_finished(self, text):
+        """Slot of the finished  correction."""
+        self.text_edit.setDisabled(True)
+        self.start_stop_button.setText(self.start_text)
+        self.select_model.setDisabled(False)
+        self.text_edit.setPlainText(text)
+        self.text_edit.setDisabled(False)
+        self.parent().set_status(self.tr('Recording stopped.'))
+
+    def model_ready(self):
+        """Slot for starting dictation after the model is ready."""
+        self.parent().set_status(self.tr('Recording started. Please dictate in ')
+                                 + self.code_to_language(self.active_language))
+        self.start_stop_button.setText(self.stop_text)
+        self.select_model.setDisabled(True)
 
     def copy_button_clicked(self):
         """Slot to copy the text from the editor to the clipboard."""

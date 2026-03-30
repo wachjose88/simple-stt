@@ -100,6 +100,7 @@ class SpeechToText(QThread):
                                    channels=1,
                                    callback=record_callback):
                 while not self.stop:
+                    self.signals.model_ready.emit()
                     data = record_queue.get()
                     if self.recognizer.AcceptWaveform(data):
                         recognizer_result = self.recognizer.Result()
@@ -114,3 +115,31 @@ class SpeechToText(QThread):
 
         except Exception as e:
             logger.error(str(e))
+
+
+class CorrectText(QThread):
+    """The thread for correcting the text.
+
+    This class represents a thread to correct the text using
+    the language tool.
+
+    Attributes:
+        signals (QObject): a connection to the signals.
+        tool (LanguageTool): Language Tool object.
+        text (str): the text to correct.
+
+    Arguments:
+        signals (QObject): a connection to the signals.
+        tool (LanguageTool): Language Tool object.
+    """
+
+    def __init__(self, signals, tool):
+        super().__init__()
+        self.signals = signals
+        self.tool = tool
+        self.text = ''
+
+    def run(self):
+        """The main loop of the thread for correcting the text."""
+        text = self.tool.correct(self.text)
+        self.signals.correction_finished.emit(text)

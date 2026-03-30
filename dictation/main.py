@@ -84,6 +84,8 @@ class DictationApp(QMainWindow):
 
         self.editor = Editor(self, self.models, self.stt_thread)
         self.signals.set_text_to_view.connect(self.editor.set_text_to_view)
+        self.signals.model_ready.connect(self.editor.model_ready)
+        self.signals.correction_finished.connect(self.editor.correction_finished)
         self.setCentralWidget(self.editor)
         self.show()
 

@@ -35,9 +35,15 @@ class DictationSignals(QObject):
 
     Attributes:
         set_text_to_view (Signal): Signal that sets the text of the editor.
+        model_ready (Signal): Signal that fires when the model is ready.
+        correction_finished (Signal): Signal that fires when the correction is finished.
     """
 
     def __init__(self):
         super().__init__()
 
     set_text_to_view = Signal(str)
+
+    model_ready = Signal()
+
+    correction_finished = Signal(str)
