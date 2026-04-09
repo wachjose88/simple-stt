@@ -36,7 +36,7 @@ from argparse import ArgumentParser, ArgumentTypeError
 from pathlib import Path
 
 from PySide6.QtCore import QTranslator, QLibraryInfo
-from PySide6.QtWidgets import QMainWindow, QApplication, QMessageBox
+from PySide6.QtWidgets import QMainWindow, QApplication, QMessageBox, QFileDialog
 
 from dictation.editor import Editor
 from dictation.signals import DictationSignals
@@ -70,6 +70,22 @@ class DictationApp(QMainWindow):
 
     def __init__(self, models_directory):
         super().__init__()
+        if not models_directory:
+            logger.debug('select models directory')
+            models_directory = QFileDialog.getExistingDirectory(
+                self,
+                self.tr('Select directory for vosk models')
+            )
+            try:
+                models_directory = Path(models_directory).resolve(strict=True)
+            except OSError:
+                QMessageBox.warning(
+                    self,
+                    self.tr('No valid directory selected.'),
+                    self.tr('Please select an existing directory.')
+                )
+                return
+
         logger.debug('Initializing Dictionation App')
         self.setWindowTitle(self.tr('Dictionation'))
         self.statusBar().showMessage(self.tr('Dictionation App Started'))
@@ -80,7 +96,7 @@ class DictationApp(QMainWindow):
 
         self.signals = DictationSignals()
 
-        self.stt_thread = SpeechToText(self.signals)
+        self.stt_thread = SpeechToText(self.signals, self)
 
         self.editor = Editor(self, self.models, self.stt_thread)
         self.signals.set_text_to_view.connect(self.editor.set_text_to_view)
@@ -155,7 +171,7 @@ if __name__ == '__main__':
     parser.add_argument('-md', '--models-directory',
                         type=path_type,
                         help='Directory containing vosk models',
-                        required=True)
+                        required=False)
     args = parser.parse_args()
 
     app = QApplication(sys.argv)

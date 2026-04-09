@@ -72,22 +72,37 @@
 <context>
     <name>DictationApp</name>
     <message>
-        <location filename="../main.py" line="74"/>
+        <location filename="../main.py" line="77"/>
+        <source>Select directory for vosk models</source>
+        <translation>Ordner mit Vosk-Models auswählen</translation>
+    </message>
+    <message>
+        <location filename="../main.py" line="84"/>
+        <source>No valid directory selected.</source>
+        <translation>Kein gültiger Ordner ausgewählt.</translation>
+    </message>
+    <message>
+        <location filename="../main.py" line="85"/>
+        <source>Please select an existing directory.</source>
+        <translation>Bitte wähle einen existierenden Ordner aus.</translation>
+    </message>
+    <message>
+        <location filename="../main.py" line="90"/>
         <source>Dictionation</source>
         <translation>Diktieren</translation>
     </message>
     <message>
-        <location filename="../main.py" line="75"/>
+        <location filename="../main.py" line="91"/>
         <source>Dictionation App Started</source>
         <translation>Diktierapp gestartet</translation>
     </message>
     <message>
-        <location filename="../main.py" line="121"/>
+        <location filename="../main.py" line="137"/>
         <source>Confirm Exit...</source>
         <translation>Beenden bestätigen...</translation>
     </message>
     <message>
-        <location filename="../main.py" line="122"/>
+        <location filename="../main.py" line="138"/>
         <source>Are you sure you want to exit ?</source>
         <translation>Willst du wirklich beenden?</translation>
     </message>
@@ -148,6 +163,19 @@
         <location filename="../editor.py" line="282"/>
         <source>Text copied to clipboard.</source>
         <translation>Text wurde in die Zwischenablage kopiert.</translation>
+    </message>
+</context>
+<context>
+    <name>SpeechToText</name>
+    <message>
+        <location filename="../stt.py" line="102"/>
+        <source>Could not load model.</source>
+        <translation>Model konnte nicht geladen werden.</translation>
+    </message>
+    <message>
+        <location filename="../stt.py" line="103"/>
+        <source>Please select a valid model.</source>
+        <translation>Bitte wähle ein valides Model aus.</translation>
     </message>
 </context>
 </TS>
