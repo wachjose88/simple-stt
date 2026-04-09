@@ -33,6 +33,7 @@ import queue
 
 from PySide6.QtCore import QThread
 import sounddevice as sd
+from PySide6.QtWidgets import QMessageBox
 from vosk import Model, KaldiRecognizer
 
 logger = logging.getLogger('dictation.stt')
@@ -68,6 +69,7 @@ class SpeechToText(QThread):
 
     Attributes:
         signals (QObject): a connection to the signals.
+        parent (Qwidget): the parent widget.
         stop (bool): False if the thread should be stopped.
         model_name (str): the name of the model.
         model (Model): the initialized model.
@@ -76,11 +78,13 @@ class SpeechToText(QThread):
 
     Arguments:
         signals (QObject): a connection to the signals.
+        parent (Qwidget): the parent widget.
     """
 
-    def __init__(self, signals):
+    def __init__(self, signals, parent):
         super().__init__()
         self.signals = signals
+        self.parent = parent
         self.stop = False
         self.model_name = None
         self.model = None
@@ -92,7 +96,15 @@ class SpeechToText(QThread):
 
     def run(self):
         """The main loop of the thread for speech recognition."""
-        self.model = Model(str(self.model_name))
+        try:
+            self.model = Model(str(self.model_name))
+        except Exception:
+            QMessageBox.warning(
+                self.parent,
+                self.tr('Could not load model.'),
+                self.tr('Please select a valid model.')
+            )
+            return
         self.recognizer = KaldiRecognizer(self.model, self.samplerate)
         self.recognizer.SetWords(False)
         try:
