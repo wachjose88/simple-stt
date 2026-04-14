@@ -41,7 +41,7 @@ from PySide6.QtWidgets import QMainWindow, QApplication, QMessageBox, QFileDialo
 from dictation.editor import Editor
 from dictation.signals import DictationSignals
 from dictation.stt import SpeechToText
-from settings import LOGGING_CONFIG
+from dictation.settings import LOGGING_CONFIG
 
 
 logger = logging.getLogger('dictation.app')

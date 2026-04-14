@@ -35,6 +35,16 @@ the app and provide the path to the directory containing the models:
 python3 main.py -md <PATH-TO-MODELS-DIRECTORY>
 ```
 
+## Build a single executable 
+
+To build a single executable install the builder and build it:  
+
+```sh
+pip install pyinstaller
+cd dictation
+pyinstaller --onefile  --collect-all vosk --add-data "locales/dictation_de.qm:./locales" --name dictation --upx-dir=/usr/bin/upx *.py
+```
+
 ## Build the Documentation
 
 To build the documentation use the following commands:
